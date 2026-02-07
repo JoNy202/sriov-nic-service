@@ -1,0 +1,23 @@
+#!/bin/bash
+
+interfaces=("eno1" "eno2")
+numvfs=10
+
+for iface in "${interfaces[@]}"; do
+    if [ -e "/sys/class/net/$iface" ]; then
+        if [ -f "/sys/class/net/$iface/device/sriov_numvfs" ]; then
+            mac=$(ip link show "$iface" | awk '/ether/ {print $2; exit}' | tr -d ':')
+            echo $numvfs > /sys/class/net/$iface/device/sriov_numvfs
+            for vf in $(seq 0 $numvfs); do
+                macvf=$(printf "%012x" $(( 0x$mac + $vf + 10 )) | sed 's/../&:/g;s/:$//')
+                ip link set $iface vf $vf mac $macvf
+                ip link set $iface vf $vf trust on > /dev/null 2>&1
+                ip link set $iface vf $vf spoofchk off > /dev/null 2>&1
+            done
+        else
+            echo "Interface $iface not sriov device."
+        fi
+    else
+        echo "Interface $iface does not exist."
+    fi
+done
