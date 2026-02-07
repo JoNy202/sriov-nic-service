@@ -1,0 +1,10 @@
+[Unit]
+Description=Enables SR-IOV and assigns MAC Addresses
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/sriov_nic_enable
+
+[Install]
+WantedBy=multi-user.target
